@@ -7,7 +7,6 @@
  * Notes:
  * - Discord does NOT allow Korean command names like "/충전". Use English names with Korean descriptions.
  */
-import { requireEnv } from "../src/lib/env";
 import { SUPPORTED_COINS } from "../src/lib/constants";
 
 type Command = Record<string, unknown>;
@@ -140,8 +139,10 @@ const commands: Command[] = [
 ];
 
 async function main() {
-  const appId = requireEnv("DISCORD_APPLICATION_ID");
-  const token = requireEnv("DISCORD_BOT_TOKEN");
+  const appId = process.env.DISCORD_APPLICATION_ID;
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!appId) throw new Error("Missing env: DISCORD_APPLICATION_ID");
+  if (!token) throw new Error("Missing env: DISCORD_BOT_TOKEN");
 
   const url = `https://discord.com/api/v10/applications/${appId}/commands`;
   const res = await fetch(url, {

@@ -1,4 +1,3 @@
-import { env } from "@/lib/env";
 import { binanceSymbol, isSupportedCoin, upbitMarket, type CoinSymbol, COIN_UNIT_SCALE } from "@/lib/constants";
 import { parseDecimalToInt } from "@/lib/intmath";
 
@@ -95,8 +94,7 @@ export function foreignKrwFrom(usd_e6: bigint, fx_e4: bigint): bigint {
 }
 
 export async function buildPriceSnapshot(symbol: CoinSymbol): Promise<PriceSnapshot> {
-  const e = env();
-  const fee_bp = e.FEE_BP;
+  const fee_bp = Number(process.env.FEE_BP ?? "150");
 
   const [fx, foreign, domestic] = await Promise.all([
     fetchFxKrwPerUsdE4(),

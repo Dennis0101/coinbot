@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { env } from "@/lib/env";
 import { hmacSha256Hex, sha256Hex, timingSafeEqualHex } from "@/lib/crypto";
 import { withTx, ensureUser } from "@/lib/db";
 import { pgBigint, pgJson } from "@/lib/pg";
@@ -24,15 +23,15 @@ const PaymentPayload = z.object({
  * Replace this with your real provider signature verification when integrating.
  */
 export async function POST(req: Request) {
-  const e = env();
-  if (!e.PAYMENT_WEBHOOK_SECRET) {
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET;
+  if (!secret) {
     return NextResponse.json({ ok: false, error: "PAYMENT_WEBHOOK_SECRET not set" }, { status: 500 });
   }
 
   const sig = req.headers.get("x-payment-signature") ?? "";
   const raw = await req.text();
   const hash = sha256Hex(raw);
-  const expected = hmacSha256Hex(e.PAYMENT_WEBHOOK_SECRET, hash);
+  const expected = hmacSha256Hex(secret, hash);
   const signatureValid = timingSafeEqualHex(sig.toLowerCase(), expected);
 
   let parsed: z.infer<typeof PaymentPayload>;

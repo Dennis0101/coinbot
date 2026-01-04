@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import type { APIInteraction } from "discord-api-types/v10";
-import { env } from "@/lib/env";
 import { verifyDiscordRequest } from "@/lib/discord/verify";
 import { handleDiscordInteraction } from "@/lib/discord/handlers";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const e = env();
-  if (!e.DISCORD_PUBLIC_KEY) {
+  const publicKey = process.env.DISCORD_PUBLIC_KEY;
+  if (!publicKey) {
     return NextResponse.json({ ok: false, error: "DISCORD_PUBLIC_KEY not set" }, { status: 500 });
   }
 
@@ -20,7 +19,7 @@ export async function POST(req: Request) {
 
   const body = await req.text();
   const ok = verifyDiscordRequest({
-    publicKeyHex: e.DISCORD_PUBLIC_KEY,
+    publicKeyHex: publicKey,
     signatureHex: signature,
     timestamp,
     body,

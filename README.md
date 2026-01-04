@@ -67,6 +67,8 @@ vercel.json
   - `FEE_BP`: 구매 수수료(basis points, 기본 150=1.5%)
   - `TRANSFER_FEE_BP`: 송금 수수료(bp, 기본 30=0.3%)
 
+> 이 프로젝트는 별도의 `.env` 파일 없이, Vercel에 등록한 환경변수를 **코드에서 `process.env.*`로 직접 읽는 방식**입니다.
+
 ## DB 스키마 적용
 
 1) Vercel Postgres 생성/연동 후 SQL Editor에서 `db/schema.sql` 실행  

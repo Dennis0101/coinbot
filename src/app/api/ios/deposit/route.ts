@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { env, requireEnv } from "@/lib/env";
 import { hmacSha256Hex, sha256Hex, timingSafeEqualHex } from "@/lib/crypto";
 import { nowMs } from "@/lib/intmath";
 import { withTx, ensureUser } from "@/lib/db";
@@ -20,8 +19,11 @@ const DepositPayload = z.object({
 });
 
 export async function POST(req: Request) {
-  const secret = requireEnv("IOS_DEPOSIT_SHARED_SECRET");
-  const e = env();
+  const secret = process.env.IOS_DEPOSIT_SHARED_SECRET;
+  if (!secret) {
+    return NextResponse.json({ ok: false, error: "IOS_DEPOSIT_SHARED_SECRET not set" }, { status: 500 });
+  }
+  const maxSkewSec = Number(process.env.IOS_DEPOSIT_MAX_SKEW_SEC ?? "300");
 
   const raw = await req.text();
   const payloadHash = sha256Hex(raw);
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
 
   // Replay window check (server-side)
   const skewMs = Math.abs(nowMs() - parsed.eventTsMs);
-  if (skewMs > e.IOS_DEPOSIT_MAX_SKEW_SEC * 1000) {
+  if (skewMs > maxSkewSec * 1000) {
     // Still log the event (as invalid), but do not credit.
   }
 
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
 
   const discordId = BigInt(parsed.discordId);
   const amountKrw = BigInt(parsed.amountKrw);
-  const shouldCredit = signatureValid && skewMs <= e.IOS_DEPOSIT_MAX_SKEW_SEC * 1000;
+  const shouldCredit = signatureValid && skewMs <= maxSkewSec * 1000;
 
   try {
     const result = await withTx(async (tx) => {

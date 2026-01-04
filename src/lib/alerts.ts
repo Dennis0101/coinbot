@@ -1,5 +1,4 @@
 import { sql } from "@vercel/postgres";
-import { env } from "@/lib/env";
 import { pgJson } from "@/lib/pg";
 
 export async function recordAdminAlert(kind: string, message: string, context?: unknown) {
@@ -11,10 +10,10 @@ export async function recordAdminAlert(kind: string, message: string, context?: 
 }
 
 export async function postDiscordAdminWebhook(content: string) {
-  const e = env();
-  if (!e.ADMIN_DISCORD_WEBHOOK_URL) return;
+  const url = process.env.ADMIN_DISCORD_WEBHOOK_URL;
+  if (!url) return;
   try {
-    await fetch(e.ADMIN_DISCORD_WEBHOOK_URL, {
+    await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ content }),

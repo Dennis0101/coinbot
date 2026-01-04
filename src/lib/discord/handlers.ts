@@ -6,7 +6,6 @@ import type {
   APIInteractionResponse,
 } from "discord-api-types/v10";
 import { InteractionType } from "discord-api-types/v10";
-import { adminRoleIdSet, env } from "@/lib/env";
 import { errorMessage, message, modal, pong } from "@/lib/discord/respond";
 import { COIN_UNIT_SCALE, SUPPORTED_COINS, type CoinSymbol } from "@/lib/constants";
 import { formatAtomicToDecimal, parseDecimalToInt } from "@/lib/intmath";
@@ -28,7 +27,12 @@ function getInvokerDiscordId(i: APIInteraction): bigint | null {
 function isAdmin(i: APIInteraction): boolean {
   const anyI = i as unknown as { member?: { roles?: string[] } };
   const roles: string[] = anyI.member?.roles ?? [];
-  const adminRoles = adminRoleIdSet();
+  const adminRoles = new Set(
+    String(process.env.ADMIN_ROLE_IDS ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
   if (!adminRoles.size) return false;
   return roles.some((r) => adminRoles.has(r));
 }
@@ -232,8 +236,7 @@ function cmdPanel(): APIInteractionResponse {
 }
 
 async function cmdCharge(discordId: bigint): Promise<APIInteractionResponse> {
-  const e = env();
-  const base = e.APP_BASE_URL ?? "(APP_BASE_URL 미설정)";
+  const base = process.env.APP_BASE_URL ?? "(APP_BASE_URL 미설정)";
   const url = `${base}/api/ios/deposit`;
 
   return message(
@@ -479,8 +482,8 @@ async function cmdSendFromPanel(discordId: bigint, symbol: CoinSymbol, to: strin
   if (amountAtomic <= 0n) return errorMessage("송금 수량이 올바르지 않습니다.");
 
   // Reuse core send flow by building the same operations
-  const e = env();
-  const feeAtomic = (amountAtomic * BigInt(e.TRANSFER_FEE_BP)) / 10_000n;
+  const transferFeeBp = Number(process.env.TRANSFER_FEE_BP ?? "30");
+  const feeAtomic = (amountAtomic * BigInt(transferFeeBp)) / 10_000n;
   const sendAtomic = amountAtomic - feeAtomic;
   if (sendAtomic <= 0n) return errorMessage("송금 수수료가 수량보다 큽니다.");
 
@@ -726,7 +729,7 @@ async function cmdBuy(i: APIChatInputApplicationCommandInteraction, discordId: b
 }
 
 async function cmdSend(i: APIChatInputApplicationCommandInteraction, discordId: bigint): Promise<APIInteractionResponse> {
-  const e = env();
+  const transferFeeBp = Number(process.env.TRANSFER_FEE_BP ?? "30");
   const symbol = coinChoiceOrThrow(getOptionValue(i, "symbol"));
   const to = String(getOptionValue(i, "address") ?? "").trim();
   const amountStr = String(getOptionValue(i, "amount") ?? "").trim();
@@ -737,7 +740,7 @@ async function cmdSend(i: APIChatInputApplicationCommandInteraction, discordId: 
   const amountAtomic = parseDecimalToInt(amountStr, unitScale);
   if (amountAtomic <= 0n) return errorMessage("송금 수량이 올바르지 않습니다.");
 
-  const feeAtomic = (amountAtomic * BigInt(e.TRANSFER_FEE_BP)) / 10_000n;
+  const feeAtomic = (amountAtomic * BigInt(transferFeeBp)) / 10_000n;
   const sendAtomic = amountAtomic - feeAtomic;
   if (sendAtomic <= 0n) return errorMessage("송금 수수료가 수량보다 큽니다.");
 
