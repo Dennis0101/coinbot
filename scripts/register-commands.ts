@@ -18,6 +18,10 @@ function coinChoices() {
 
 const commands: Command[] = [
   {
+    name: "panel",
+    description: "버튼 기반 패널 열기(이후 버튼으로만 사용)",
+  },
+  {
     name: "charge",
     description: "충전 안내 (iOS 단축어 자동충전)",
   },

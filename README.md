@@ -84,6 +84,15 @@ vercel.json
 DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... npm run register-commands
 ```
 
+### 버튼 기반 UX(권장)
+
+- 사용자는 **`/panel` 1번만 실행**하면 됩니다.
+- 이후에는 생성된 “패널 메시지”의 **버튼/셀렉트/모달**로:
+  - 충전/잔액/시세/재고 조회
+  - 코인 구매(코인 선택 → KRW 입력 모달)
+  - 송금 요청(코인 선택 → 주소/수량 입력 모달)
+  을 전부 진행합니다.
+
 > Discord 정책상 `/충전` 같은 **한글 명령어 이름은 불가**라서, 이 프로젝트는 `/charge`, `/balance`, `/buy`, `/send`, `/price`, `/stock`로 구현합니다(응답 텍스트는 한글).
 
 ## iOS 단축어 자동충전 흐름(실전)
